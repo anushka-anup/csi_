@@ -1,0 +1,128 @@
+{
+  "$schema": "https://schema.management.azure.com/2020-06-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-01-01",
+      "name": "hub-vnet",
+      "location": "EastUS",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "AzureFirewallSubnet",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24"
+            }
+          },
+          {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "10.0.2.0/24"
+            }
+          },
+          {
+            "name": "DNSForwardingSubnet",
+            "properties": {
+              "addressPrefix": "10.0.3.0/24"
+            }
+          },
+          {
+            "name": "BastionHostSubnet",
+            "properties": {
+              "addressPrefix": "10.0.4.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-01-01",
+      "name": "webapp-spoke-vnet",
+      "location": "EastUS",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.1.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "WebAppSubnet",
+            "properties": {
+              "addressPrefix": "10.1.1.0/24"
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [
+          {
+            "name": "hub-to-webapp",
+            "properties": {
+              "remoteVirtualNetwork": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', 'hub-vnet')]"
+              },
+              "allowVirtualNetworkAccess": true,
+              "allowForwardedTraffic": true,
+              "allowGatewayTransit": false,
+              "useRemoteGateways": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-01-01",
+      "name": "storage-spoke-vnet",
+      "location": "EastUS",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.2.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "StorageAccountSubnet",
+            "properties": {
+              "addressPrefix": "10.2.1.0/24"
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [
+          {
+            "name": "hub-to-storage",
+            "properties": {
+              "remoteVirtualNetwork": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', 'hub-vnet')]"
+              },
+              "allowVirtualNetworkAccess": true,
+              "allowForwardedTraffic": true,
+              "allowGatewayTransit": false,
+              "useRemoteGateways": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-01-01",
+      "name": "appGwPublicIP",
+      "location": "EastUS",
+      "properties": {
+        "sku": {
+          "name": "Standard_v2"
+        },
+        "allocationMethod": "Dynamic",
+        "dnsSettings": {
+          "publicIPAddressDnsName": "appgw-public"
+        }
+      }
+    },
